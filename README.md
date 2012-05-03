@@ -5,9 +5,16 @@ Dex
 A Ruby gem providing a function to 
 log exceptions to sqlite3.
 
-Installation
+Requirements/Installation
 ------------
 
+Required:
+
+* Ruby 1.9.3
+
+Install:
+
+    sudo apt-get install sqlite3
     gem install Dex
 
 Usage
@@ -31,7 +38,7 @@ Run Tests
     git clone git@github.com:da99/Dex.git
     cd Dex
     bundle update
-    bundle exec bacon spec/main.rb
+    bundle exec bacon spec/libs/main.rb
 
 "I hate writing."
 -----------------------------

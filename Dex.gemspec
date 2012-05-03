@@ -23,7 +23,9 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rake'
   s.add_development_dependency 'Bacon_Colored'
   s.add_development_dependency 'pry'
+  s.add_development_dependency 'Exit_0'
   
   # Specify any dependencies here; for example:
   s.add_runtime_dependency 'sqlite3'
+  s.add_runtime_dependency 'sequel'
 end
