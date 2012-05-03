@@ -1,8 +1,5 @@
 require 'Dex/version'
-
 require 'sequel'
-DB = Sequel.connect 'sqlite:///tmp/dex.db'
-
 
 class Dex
 
@@ -16,20 +13,32 @@ class Dex
 
   module DSL
     
+    def db_file f = :_R_
+      return @db_file if f == :_R_
+      @db_file = f
+    end
+
+    def keep_only n = 250
+      c = table.count
+      return false unless c > 250
+      table.filter( :id=> Dex.table.select(:id).limit( c-n ) ).delete
+    end
+
     def db name = :_RETURN_
       if name != :_RETURN_
         @db = begin
-                db = Sequel.connect "sqlite://#{name}"
-                  db.create_table?(Dex.default_table) {
+                db_file name
+                db = Sequel.connect "sqlite://#{db_file}"
+                db.create_table?(Dex.default_table) {
 
-                    primary_key :id
-                    String :message
-                    String :exception
-                    Text :backtrace
-                    DateTime :created_at
+                  primary_key :id
+                  String :message
+                  String :exception
+                  Text :backtrace
+                  DateTime :created_at
 
-                  }
-                  db
+                }
+                db
               end
       end
 

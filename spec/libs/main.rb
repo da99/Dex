@@ -19,6 +19,27 @@ require 'Bacon_Colored'
 require 'pry'
 require 'Exit_0'
 
+Exit_0 "rm /tmp/dex.test.db" if File.exists?("/tmp/dex.test.db")
+Dex.db "/tmp/dex.test.db"
+
+def transact 
+  Dex.db.transaction(:rollback=>:always) {
+    yield
+  }
+end
+
+
+def except name
+  err = nil
+  begin
+    raise name
+  rescue Object => e
+    err = e
+  end
+  err
+end
+
+
 # ======== Include the tests.
 if ARGV.size > 1 && ARGV[1, ARGV.size - 1].detect { |a| File.exists?(a) }
   # Do nothing. Bacon grabs the file.
