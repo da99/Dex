@@ -2,7 +2,8 @@
 Dex
 ================
 
-A Ruby gem.
+A Ruby gem providing a function to 
+log exceptions to sqlite3.
 
 Installation
 ------------
@@ -14,7 +15,14 @@ Usage
 
     require "Dex"
     
-    Dex
+    Dex.db "./my_log.db"
+
+    begin
+      raise
+    rescue Object => e
+      Dex.log $!
+      raise e
+    end
 
 
 Run Tests
