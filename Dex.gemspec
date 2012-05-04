@@ -24,14 +24,10 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'Bacon_Colored'
   s.add_development_dependency 'pry'
   s.add_development_dependency 'Exit_0'
-  s.add_development_dependency 'rack-test'
+
   
   # Specify any dependencies here; for example:
   s.add_runtime_dependency 'sqlite3'
   s.add_runtime_dependency 'sequel'
-  s.add_runtime_dependency 'sinatra'
-  s.add_runtime_dependency 'markaby'
-  s.add_runtime_dependency 'thin'
-  s.add_runtime_dependency 'sinatra-reloader'
-  s.add_runtime_dependency 'chronic_duration'
+
 end
