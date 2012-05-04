@@ -42,6 +42,20 @@ describe "Dex :insert" do
     }
   end
   
+  it "returns id of new record" do
+    transact {
+      e = except "My record"
+      id = Dex.insert(e)
+      Dex.filter(:id=>id).first[:message].should == "My record"
+    }
+  end
+
+  it "sets :status to 0 by default" do
+    transact {
+      id = Dex.insert(except "Another record")
+      Dex.filter(:id=>id).first[:status].should == 0
+    }
+  end
 end # === Dex :insert
 
 describe "Dex :keep_only" do

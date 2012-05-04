@@ -35,6 +35,7 @@ class Dex
                   String :message
                   String :exception
                   Text :backtrace
+                  Integer :status
                   DateTime :created_at
 
                 }
@@ -57,6 +58,7 @@ class Dex
         :message   => e.message, \
         :exception => e.exception.class.name, \
         :backtrace => e.backtrace.join("\n"),
+        :status    => 0,
         :created_at => Time.now.utc
     end
 
