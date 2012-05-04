@@ -41,6 +41,7 @@ class Dex
                 }
                 db
               end
+        @table = nil
       end
 
       @db ||= db(Dex.default_db)

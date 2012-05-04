@@ -12,6 +12,11 @@ describe "get /" do
     }
   end
 
+  it "renders message when there are no exceptions" do
+    get "/"
+    last_response.body.should.match %r!No exceptions!
+  end
+
 end # === get /
 
 describe "get /recent/:num" do

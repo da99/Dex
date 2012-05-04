@@ -33,7 +33,7 @@ class Dex
     def recent num = 10
       vars = Hash[
         :title => "Dex List",
-        :list  => Dex.recent
+        :list  => Dex.recent.to_a
       ]
       view_index vars
     end
@@ -54,13 +54,16 @@ class Dex
     
     def view_index vars
       layout(vars) {
-        vars[:list].each { |db|
-          div {
-            p "test"
-            p db[:message]
-            p db[:exception]
+        if vars[:list].empty?
+          div.empty { p "No exceptions created." }
+        else
+          vars[:list].each { |db|
+            div {
+              p db[:message]
+              p db[:exception]
+            }
           }
-        }
+        end
       }
     end
 

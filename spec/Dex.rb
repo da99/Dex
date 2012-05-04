@@ -1,4 +1,18 @@
 
+describe "Dex :db" do
+  
+  it "resets :table to nil after specifying a new Database" do
+    t = Class.new {
+      include Dex::DSL
+    }.new
+    t.db "/tmp/db.test.1.db"
+    t.table.count
+    t.db "/tmp/db.test.2.db"
+    t.instance_eval { @table }.should.be == nil
+  end
+
+end # === Dex :db
+
 describe "Dex :recent" do
   
   it "returns first result if n = 1" do
