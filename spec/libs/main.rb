@@ -24,12 +24,6 @@ require 'Dex'
 Exit_0 "rm /tmp/dex.test.db" if File.exists?("/tmp/dex.test.db")
 Dex.db "/tmp/dex.test.db"
 
-def transact 
-  Dex.db.transaction(:rollback=>:always) {
-    yield
-  }
-end
-
 def new_dex
   @t ||= Class.new { include Dex::DSL }
   @t.new
@@ -43,6 +37,15 @@ def except name
     err = e
   end
   err
+end
+
+
+shared "Test DB" do
+  
+  before {
+    Dex.table.delete
+  }
+  
 end
 
 
