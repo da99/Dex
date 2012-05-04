@@ -2,13 +2,35 @@
 describe "Dex :db" do
   
   it "resets :table to nil after specifying a new Database" do
-    t = Class.new {
-      include Dex::DSL
-    }.new
+    t = new_dex
     t.db "/tmp/db.test.1.db"
     t.table.count
     t.db "/tmp/db.test.2.db"
     t.instance_eval { @table }.should.be == nil
+  end
+
+  it "allows file names with underscores: my_log.db" do
+    file = 'my_log.db'
+    begin
+      should.not.raise { 
+        db = new_dex
+        db.db file 
+      }
+    ensure
+      File.unlink file if File.exists?(file)
+    end
+  end
+
+  it "allows relative file names" do
+    file = './my_log.db'
+    begin
+      should.not.raise { 
+        db = new_dex
+        db.db file 
+      }
+    ensure
+      File.unlink file if File.exists?(file)
+    end
   end
 
 end # === Dex :db

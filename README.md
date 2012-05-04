@@ -22,7 +22,7 @@ Usage
 
     require "Dex"
     
-    Dex.db "./my_log.db"
+    Dex.db "my_log.db"
 
     begin
       raise

@@ -28,7 +28,7 @@ class Dex
       if name != :_RETURN_
         @db = begin
                 db_file name
-                db = Sequel.connect "sqlite://#{db_file}"
+                db = Sequel.sqlite db_file
                 db.create_table?(Dex.default_table) {
 
                   primary_key :id

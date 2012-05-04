@@ -54,6 +54,10 @@ def transact
   }
 end
 
+def new_dex
+  @t ||= Class.new { include Dex::DSL }
+  @t.new
+end
 
 def except name
   err = nil
