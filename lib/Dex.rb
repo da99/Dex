@@ -3,8 +3,12 @@ require 'sequel'
 
 class Dex
 
+  def self.rack_dir
+    @rack_dir ||= File.join( File.dirname( __FILE__ ) , "/Dex/Rack_App" )
+  end
+
   def self.default_db
-    "dex_exceptions.db"
+    "/tmp/dex_exceptions.db"
   end
 
   def self.default_table
