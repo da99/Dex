@@ -68,6 +68,14 @@ class Dex
         ds
       end
     end
+
+    def method_missing *args, &blok
+      if table.respond_to?(args.first)
+        table.send *args, &blok
+      else
+        super
+      end
+    end
     
   end # === DSL
 

@@ -50,7 +50,7 @@ describe "Dex :keep_only" do
     transact {
       300.times { |i| Dex.insert except(i.to_s) }
       Dex.keep_only
-      Dex.table.count.should == 250
+      Dex.count.should == 250
       Dex.recent(1)[:message].should == '299'
     }
   end
@@ -64,4 +64,24 @@ describe "Dex :keep_only" do
   end
 
 end # === Dex :keep_only
+
+describe "Dex missing_method" do
+  
+  it "sends message to :table if it responds to message" do
+    transact {
+      (rand 10).times { |i| Dex.insert except(i.to_s) }
+      Dex.count.should == Dex.table.count
+    }
+  end
+
+  it "raises super :missing_method if :table does not respond to message" do
+    transact {
+      (rand 10).times { |i| Dex.insert except(i.to_s) }
+      should.raise(NoMethodError) {
+        Dex.xyz
+      }.message.should.match %r!undefined method `xyz' for Dex:Class!
+    }
+  end
+  
+end # === Dex missing_method
 
