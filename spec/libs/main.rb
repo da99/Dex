@@ -18,15 +18,18 @@ Bacon.summary_on_exit
 require 'Bacon_Colored'
 require 'pry'
 require 'Exit_0'
-
 require 'Dex'
 
-Exit_0 "rm /tmp/dex.test.db" if File.exists?("/tmp/dex.test.db")
-Dex.db "/tmp/dex.test.db"
+Dex.db ":memory:"
 
-def new_dex
+def new_dex db = nil
   @t ||= Class.new { include Dex::DSL }
-  @t.new
+  dex = @t.new
+  if db
+    dex.db(db[':'] ? db : File.join("/tmp", db) )
+  end
+
+  dex
 end
 
 def except name

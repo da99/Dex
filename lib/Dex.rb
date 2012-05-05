@@ -3,23 +3,80 @@ require 'sequel'
 
 class Dex
 
-  def self.rack_dir
-    @rack_dir ||= File.join( File.dirname( __FILE__ ) , "/Dex/Rack_App" )
+  module DEFAULT
+    DB_NAME    = "/tmp/dex_exceptions.db" 
+    TABLE_NAME = :dex_exceptions
+    RACK_DIR   = File.join( File.dirname( __FILE__ ) , "/Dex/Rack" )
   end
 
-  def self.default_db
-    "/tmp/dex_exceptions.db"
-  end
-
-  def self.default_table
-    :dex_exceptions
+  def self.default k
+    eval "#{self}::DEFAULT::#{k.to_s.upcase}"
   end
 
   module DSL
     
-    def db_file f = :_R_
-      return @db_file if f == :_R_
-      @db_file = f
+    attr_reader :table
+
+    def default *args
+      Dex.default(*args)
+    end
+
+    def db *args
+      return @db if args.empty? && instance_variable_defined?(:@db)
+        
+      case args.size
+        
+      when 0
+        name  = default :db_name
+        table = default :table_name
+        
+      when 1
+        name  = args[0]
+        table = default :table_name
+
+      when 2
+        name  = args[0]
+        table = args[1]
+        
+      else
+        args.shift
+        args.shift
+        raise ArgumentError, "Unknown arguments: #{args.inspect}"
+        
+      end # === case
+      
+      @db    = Sequel.sqlite(name)
+      @table = @db[table.to_sym]
+      
+      @db.create_table?(table_name) {
+
+        primary_key :id
+        String   :message
+        String   :exception
+        Text     :backtrace
+        Integer  :status
+        DateTime :created_at
+
+      }
+
+      @db
+    end # === def db
+
+    def db_name
+      db.opts[:database] || default(:db_name)
+    end
+    
+    def table_name
+      return nil unless table
+      table.opts[:from].first
+    end
+
+    def table_exists?
+      db.table_exists?(table_name)
+    end
+
+    def fields
+      db.schema(table_name).map(&:first)
     end
 
     def keep_only n = 250
@@ -28,37 +85,19 @@ class Dex
       table.filter( :id=> Dex.table.select(:id).limit( c-n ) ).delete
     end
 
-    def db name = :_RETURN_
-      if name != :_RETURN_
-        @db = begin
-                db_file name
-                db = Sequel.sqlite db_file
-                db.create_table?(Dex.default_table) {
-
-                  primary_key :id
-                  String :message
-                  String :exception
-                  Text :backtrace
-                  Integer :status
-                  DateTime :created_at
-
-                }
-                db
-              end
-        @table = nil
+    def insert e, other=Hash[]
+      unless other.keys.empty?
+        keys=other.keys.map(&:to_sym)
+        new_keys = keys - fields
+        unless new_keys.empty?
+          db.alter_table table_name do
+            new_keys.each { |k|
+              add_column k, :string
+            }
+          end
+        end
       end
-
-      @db ||= db(Dex.default_db)
-    end
-
-    def table name = :_RETURN_
-      if name != :_RETURN_
-        @table = db[name]
-      end
-      @table ||= table(:dex_exceptions)
-    end
-
-    def insert e
+      
       table.insert \
         :message   => e.message, \
         :exception => e.exception.class.name, \
@@ -67,6 +106,11 @@ class Dex
         :created_at => Time.now.utc
     end
 
+    def remove_field name
+      db.alter_table table_name do
+        drop_column name
+      end
+    end
     def recent n = 10
       ds = table.reverse_order(:created_at, :id).limit(n)
       if n < 2

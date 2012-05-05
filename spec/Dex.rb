@@ -3,12 +3,16 @@ describe "Dex :db" do
 
   behaves_like 'Test DB'
 
-  it "resets :table to nil after specifying a new Database" do
+  it "converts String table name to Symbol. (Sequel table name compatibility.)" do
     t = new_dex
-    t.db "/tmp/db.test.1.db"
-    t.table.count
-    t.db "/tmp/db.test.2.db"
-    t.instance_eval { @table }.should.be == nil
+    t.db "/tmp/db.test.1.db", "my_table"
+    t.table_name.should == "my_table".to_sym
+  end
+
+  it "sets table name to specified value" do
+    t = new_dex
+    t.db "/tmp/db.test.1.db", :my_new_table
+    t.table_name.should == :my_new_table
   end
 
   it "allows file names with underscores: my_log.db" do
@@ -86,6 +90,17 @@ describe "Dex :insert" do
     id = Dex.insert(except "Another record")
     Dex.filter(:id=>id).first[:status].should == 0
   end
+
+  it "adds new fields to table" do
+    dex = new_dex "new_fields"
+    dex.db.transaction(:rollback=>:always) {
+      dex.insert( except("New fields"), :fd1=>"field 1", :fd2=>"field 2" )
+      fields = dex.db.schema(dex.table_name).map(&:first)
+      fields.should.include :fd1
+      fields.should.include :fd2
+    }
+  end
+
 end # === Dex :insert
 
 describe "Dex :keep_only" do
@@ -93,25 +108,21 @@ describe "Dex :keep_only" do
   behaves_like 'Test DB'
 
   it "deletes oldest records leaving most recent 250" do
-    Dex.db.transaction(:rollback=>:always) { # < -- speeds up test.
-      300.times { |i| Dex.insert except(i.to_s) }
-      Dex.keep_only
-      Dex.count.should == 250
-      Dex.recent(1)[:message].should == '299'
-    }
+    300.times { |i| Dex.insert except(i.to_s) }
+    Dex.keep_only
+    Dex.count.should == 250
+    Dex.recent(1)[:message].should == '299'
   end
 
   it "accepts a limit argument" do
-    Dex.db.transaction(:rollback=>:always) { # < -- speeds up test.
-      300.times { |i| Dex.insert except(i.to_s) }
-      Dex.keep_only 12
-      Dex.table.count.should == 12
-    }
+    300.times { |i| Dex.insert except(i.to_s) }
+    Dex.keep_only 12
+    Dex.table.count.should == 12
   end
 
 end # === Dex :keep_only
 
-describe "Dex missing_method" do
+describe "Dex :missing_method" do
 
   behaves_like 'Test DB'
 
@@ -128,4 +139,23 @@ describe "Dex missing_method" do
   end
 
 end # === Dex missing_method
+
+describe "Dex :remove_field" do
+  
+  before {
+    @dex = new_dex(':memory:')
+    @dex.table.delete 
+  }
+
+  it "removes specified field" do
+    orig = @dex.fields
+    name = :my_field
+    @dex.insert except("remve field"), name => '---'
+    @dex.fields.should.include name
+    @dex.remove_field name
+    
+    @dex.fields.should.not.include name
+  end
+
+end # === Dex :remove_field
 
