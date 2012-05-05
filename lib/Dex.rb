@@ -6,7 +6,6 @@ class Dex
   module DEFAULT
     DB_NAME    = "/tmp/dex_exceptions.db" 
     TABLE_NAME = :dex_exceptions
-    RACK_DIR   = File.join( File.dirname( __FILE__ ) , "/Dex/Rack" )
   end
 
   def self.default k
