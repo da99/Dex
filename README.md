@@ -2,8 +2,7 @@
 Dex
 ================
 
-A Ruby gem providing a function to 
-log exceptions to sqlite3.
+A Ruby gem to log exceptions with sqlite3.
 
 Requirements/Installation
 ------------
