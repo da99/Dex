@@ -97,12 +97,15 @@ class Dex
         end
       end
       
-      table.insert \
-        :message   => e.message, \
-        :exception => e.exception.class.name, \
+      h = Hash[
+        :message   => e.message, 
+        :exception => e.exception.class.name, 
         :backtrace => e.backtrace.join("\n"),
         :status    => 0,
         :created_at => Time.now.utc
+      ].merge other
+      
+      table.insert h
     end
 
     def remove_field name
