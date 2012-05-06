@@ -101,11 +101,21 @@ describe "Dex :insert" do
     }
   end
 
-  it "saves merges optional Hash with exception" do
+  it "merges optional Hash with exception" do
     dex = new_dex "new_fields"
     dex.db.transaction(:rollback=>:always) {
       id = dex.insert( except("Optional Hash"), :fd1=>"field 1", :fd2=>"field 2" )
       dex.filter(:id=>id).first[:fd1].should == "field 1"
+    }
+  end
+
+  it "applies :inspect to any Array or Hash values." do
+    dex = new_dex "new_fields"
+    dex.db.transaction(:rollback=>:always) {
+      id = dex.insert( except("Optional Hash"), :fd1=>[], :fd2=>{} )
+      r = dex.filter(:id=>id).first
+      r[:fd1].should == [].inspect
+      r[:fd2].should == {}.inspect
     }
   end
 

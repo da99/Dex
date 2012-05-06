@@ -103,9 +103,19 @@ class Dex
         :backtrace => e.backtrace.join("\n"),
         :status    => 0,
         :created_at => Time.now.utc
-      ].merge other
+      ]
       
-      table.insert h
+      safe_other = other.inject({}) { |m, (k,v)|  
+                                      case v
+                                      when Array, Hash
+                                        m[k] = v.inspect 
+                                      else
+                                        m[k] = v
+                                      end
+                                      m
+      }
+      
+      table.insert h.merge(safe_other)
     end
 
     def remove_field name
