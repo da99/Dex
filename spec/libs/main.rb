@@ -42,6 +42,15 @@ def except name
   err
 end
 
+def rollback dex
+  dex.db.transaction(:rollback=>:always) {
+    yield
+  }
+end
+
+def last dex
+  dex.reverse_order(:id).limit(1).first
+end
 
 shared "Test DB" do
   

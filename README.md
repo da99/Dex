@@ -26,10 +26,21 @@ Usage
     begin
       raise
     rescue Object => e
-      Dex.log $!
+      Dex.insert $!
       raise e
     end
 
+You can also create your own fields:
+
+    Dex.insert $!, :HTTP_USER_AGENT=> the_agent
+
+You can also override default fields like `:status` or `:created_at`:
+
+    Dex.insert $?, :created_at=>Time.now, :status=>1
+    
+Are you importing errors from log files? You can treat a Hash as an exception:
+
+    Dex.insert :exception=>"Nginx Error", :message=>"Upstream closed", :backtrace=>[]
 
 Run Tests
 ---------

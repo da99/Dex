@@ -119,6 +119,26 @@ describe "Dex :insert" do
     }
   end
 
+  it "allows :created_at to be overridden" do
+    dex    = new_dex "created_at"
+    target = Time.now
+
+    rollback(dex) {
+      dex.insert( except("Optional Hash"), :created_at=>target )
+      last(dex)[:created_at].to_s.should == target.to_s
+    }
+  end
+  
+  it "accepts a Hash instead of an exception" do
+    dex = new_dex "custom hash"
+    rollback(dex) {
+      dex.insert :exception=>"Nginx Error", :message=>"upstream not found", :backtrace=>["file:12:txt"]
+      last(dex)[:exception].should == "Nginx Error"
+      last(dex)[:message].should == "upstream not found"
+      last(dex)[:backtrace].should == "file:12:txt"
+    }
+  end
+
 end # === Dex :insert
 
 describe "Dex :keep_only" do

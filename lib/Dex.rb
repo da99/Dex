@@ -1,5 +1,6 @@
 require 'Dex/version'
 require 'sequel'
+require 'ostruct'
 
 class Dex
 
@@ -85,6 +86,10 @@ class Dex
     end
 
     def insert e, other=Hash[]
+      if e.is_a?(Hash)
+        e = OpenStruct.new(e)
+      end
+
       unless other.keys.empty?
         keys=other.keys.map(&:to_sym)
         new_keys = keys - fields
@@ -98,9 +103,9 @@ class Dex
       end
       
       h = Hash[
-        :message   => e.message, 
-        :exception => e.exception.class.name, 
-        :backtrace => e.backtrace.join("\n"),
+        :message   => e.message || "Unknown", 
+        :exception => e.exception.is_a?(String) ? e.exception : (e.exception ? e.exception.class.name : "Unknown"),
+        :backtrace => (e.backtrace && e.backtrace.join("\n")) || "",
         :status    => 0,
         :created_at => Time.now.utc
       ]
