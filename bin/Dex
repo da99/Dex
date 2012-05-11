@@ -70,14 +70,18 @@ when 'filter'
 
   results = []
   ds_results = ds.to_a
+  
+      
   ds_results.each_index { |i|
-    h = ds_results[i]
+    h      = ds_results[i]
     offset = ds_results.size - i - 1
+    dur    = ChronicDuration.output(Time.now.to_i - h[:created_at].to_i, :format=>:short) || "<1s"
+    
     results << [ 
       offset, 
       h[:exception], 
       h[:message], 
-      ChronicDuration.output(Time.now.to_i - h[:created_at].to_i, :format=>:short) + " ago", 
+      "#{dur} ago", 
       h[:id] 
     ]
   }
