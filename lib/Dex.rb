@@ -86,41 +86,46 @@ class Dex
     end
 
     def insert e, other=Hash[]
-      if e.is_a?(Hash)
-        e = OpenStruct.new(e)
+      msg     = :message
+      bt      = :backtrace
+      ex      = :exception
+      stat    = :status
+      
+      final = Hash[ msg => 'Unknown', ex => 'Unknown', stat => 0, :created_at=>Time.now.utc ]
+      if e.respond_to?(:exception)
+        final[ msg ] = e.message
+        final[ bt  ] = e.backtrace
+        final[ ex  ] = e.exception.class.name
+      else
+        final.update e
       end
 
-      unless other.keys.empty?
-        keys=other.keys.map(&:to_sym)
-        new_keys = keys - fields
-        unless new_keys.empty?
-          db.alter_table table_name do
-            new_keys.each { |k|
-              add_column k, :string
-            }
-          end
+      final.update other
+
+      keys     = final.keys.map(&:to_sym)
+      new_keys = keys - fields
+      
+      unless new_keys.empty?
+        db.alter_table table_name do
+          new_keys.each { |k|
+            add_column k, :string
+          }
         end
       end
       
-      h = Hash[
-        :message   => e.message || "Unknown", 
-        :exception => e.exception.is_a?(String) ? e.exception : (e.exception ? e.exception.class.name : "Unknown"),
-        :backtrace => (e.backtrace && e.backtrace.join("\n")) || "",
-        :status    => 0,
-        :created_at => Time.now.utc
-      ]
+      final[ bt ] = (final[bt] || []).join("\n")
       
-      safe_other = other.inject({}) { |m, (k,v)|  
-                                      case v
-                                      when Array, Hash
-                                        m[k] = v.inspect 
-                                      else
-                                        m[k] = v
-                                      end
-                                      m
+      final.keys.each { |k|
+        v = final[k]
+        case v
+        when Array, Hash
+          final[k] = v.inspect 
+        else
+          final[k] = v
+        end
       }
       
-      table.insert h.merge(safe_other)
+      table.insert final
     end
 
     def remove_field name

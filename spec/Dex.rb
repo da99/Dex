@@ -139,6 +139,22 @@ describe "Dex :insert" do
     }
   end
 
+  it "accepts a single Hash with an overriding :created_at" do
+    dex = new_dex "custom hash"
+    rollback(dex) {
+      dex.insert :exception=>"Nginx Error", :message=>"upstream not found", :backtrace=>["file:12:txt"], :created_at=>Time.parse("2001/01/01 01:01:01")
+      last(dex)[:created_at].to_s.should == Time.parse("2001/01/01 01:01:01").to_s
+    }
+  end
+
+  it "accepts a single Hash with an overriding :status" do
+    dex = new_dex "custom hash"
+    rollback(dex) {
+      dex.insert :exception=>"Nginx Error", :message=>"upstream not found", :backtrace=>["file:12:txt"], :status=>1
+      last(dex)[:status].should == 1
+    }
+  end
+
 end # === Dex :insert
 
 describe "Dex :keep_only" do
