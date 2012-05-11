@@ -19,45 +19,16 @@ require 'Bacon_Colored'
 require 'pry'
 require 'Exit_0'
 require 'Dex'
+require 'Dex/testing'
 
 Dex.db "/tmp/dex.db"
 
 def dex
-  Dex
-end
-
-def new_dex db = nil
-  @t ||= Class.new { include Dex::DSL }
-  dex = @t.new
-  if db
-    dex.db(db[':'] ? db : File.join("/tmp", db) )
-  end
-
-  dex
+  @dex ||= Dex
 end
 
 def except name = nil
-  @counter ||= 0
-  name ||= "Error: #{(@counter+=1)}"
-  err = nil
-  begin
-      raise ArgumentError, name
-  rescue Object => e
-    err = e
-  end
-  err
-end
-
-def rollback sequel = nil
-  (sequel || dex).db.transaction(:rollback=>:always) {
-    yield
-  }
-end
-
-def rollback!
-  # Dex.db.rollback(:rollback=>:always) {
-  dex.table.delete
-  yield
+  new_exception name
 end
 
 def bin cmd = ""
@@ -72,15 +43,8 @@ def bin cmd = ""
   o
 end
 
-def insert_excepts n 
-  rollback! {
-    ids = []
-    errs = [0,1,2].map { |i| 
-      ids << Dex.insert(e=except)
-      e
-    }
-    yield ids, errs
-  }
+def insert_excepts n, &blok
+  insert_exceptions( n, &blok )
 end
 
 def last dex
