@@ -1,0 +1,155 @@
+#!/usr/bin/env ruby
+# -*- ruby -*-
+# 
+
+require "Dex"
+require 'terminal-table'
+require 'chronic_duration'
+require 'trollop'
+require 'term/ansicolor'
+include Term::ANSIColor
+
+module Kernal
+  private
+  
+end # === Kernal
+
+SUB_COMMANDS = %w{ filter toggle show info delete }
+STATUS = %w{ r unr both }
+opts = Trollop::options do
+  opt :db, "Path to database file.", :default=>Dex.default(:db_name).to_s
+  opt :table, "DB table.", :default=>Dex.default(:table_name).to_s
+  opt :action, "Must be in: #{SUB_COMMANDS.join ', '}", :default=>'filter'
+  opt :reverse_order, "Field to reverse order.", :default=>'created_at'
+  opt :limit, "DB limit", :type=>:int
+  opt :offset, "DB limit. If specified, default limit is 1.", :type=>:int
+  opt :status, "Either: #{STATUS.join ', '}", :default=>'unr'
+  opt :toggle, "Equivalent to: --action toggle --offset N", :type=>:int
+  opt :show, "Equivalent to: --action show --offset N", :type=>:int
+  opt :delete, "Equivalent to: --action delete --offset N", :type=>:int
+  opt :backtrace, "Show backtrace. Used for --show. Ignored otherwise." , :default=>false
+end
+
+[:toggle, :show, :delete].each { |k|
+  if opts[k]
+    opts[:action] = k.to_s
+    opts[:offset] = opts[k] 
+  end
+}
+
+
+Trollop::die :status, "must be either: #{STATUS.join ', '}" unless STATUS.include?(opts[:status])
+Trollop::die :action, "must be either: #{SUB_COMMANDS.join ', '}." unless SUB_COMMANDS.include?(opts[:action])
+Trollop::die "Unknown options: #{ARGV.inspect}" unless ARGV.empty?
+
+Dex.db opts[:db], opts[:table]
+OPTS = opts.dup
+OPTS.update :ds=> Dex.table
+
+OPTS[:status]=[0,1] if OPTS[:status]=='both'
+OPTS[:status]=0     if OPTS[:status]=='unr'
+OPTS[:status]=1     if OPTS[:status]=='r'
+(OPTS[:limit] ||=1) if OPTS[:offset]
+
+def raise_arg v
+  raise ArgumentError, (v.is_a?(Symbol) ? "Unknown argument: #{v.inspect}": v)
+end
+
+puts ''
+
+case OPTS[:action]
+when 'filter'
+  
+  ds = OPTS[:ds].filter( :status=>OPTS[:status] ).reverse_order(OPTS[:reverse_order])
+
+  if OPTS[:limit] || OPTS[:offset]
+    ds = ds.limit(*[OPTS[:limit] || ds.count + 1, OPTS[:offset]].compact)
+  end
+
+  results = []
+  ds_results = ds.to_a
+  ds_results.each_index { |i|
+    h = ds_results[i]
+    offset = ds_results.size - i - 1
+    results << [ 
+      offset, 
+      h[:exception], 
+      h[:message], 
+      ChronicDuration.output(Time.now.to_i - h[:created_at].to_i, :format=>:short) + " ago", 
+      h[:id] 
+    ]
+  }
+  
+  if results.empty?
+    puts "No unresolved exceptions."
+  else
+    puts Terminal::Table.new(:headings=>%w{-o Exception Message Time ID}, :rows=> results)
+  end
+  
+when :toggle.to_s
+  Trollop::die :offset, "must be specified" unless OPTS[:offset]
+  
+  r = OPTS[:ds].filter(:status=>OPTS[:status]).order(OPTS[:reverse_order]).limit( 1, OPTS[:offset] ).first
+  
+  raise_arg "Record not found." unless r
+  stat = r[:status] == 0 ? 1 : 0
+  OPTS[:ds].filter(:id=>r[:id]).update(:status=>stat)
+  puts "#{r[:id]} => #{stat}"
+
+when 'delete'
+  r = OPTS[:ds].filter(:status=>OPTS[:status]).reverse_order(OPTS[:reverse_order]).limit( 1, OPTS[:offset]).first
+  Trollop::die "No record found with offset: #{OPTS[:offset]}" unless r
+  OPTS[:ds].filter(:id=>r[:id]).delete
+  puts "Record (id: #{r[:id]}) with offset #{OPTS[:offset]} has been deleted."
+  
+when 'show'
+  r = OPTS[:ds].filter(:status=>OPTS[:status]).reverse_order(OPTS[:reverse_order]).limit( 1, OPTS[:offset]).first
+  raise_args "Record not found with offset: #{OPTS[:offset]}" unless r
+  
+  b = r.delete :backtrace
+  
+  puts Terminal::Table.new(:rows=>r.to_a)
+
+  if OPTS[:backtrace]
+    puts "Backtrace:"
+    current_line = nil
+    rows = []
+    b.each_line { |l|
+      pieces = l.split(%r!:(\d+):!)
+      line = pieces.shift
+      num = pieces.shift
+      code = pieces.join("")
+      
+      if current_line != line
+        rows << [line]
+        current_line = line
+        puts ''
+        puts bold(line.sub(Dir.pwd, '.').sub(File.expand_path('~'), '~'))
+      end
+      
+      rows << [num, code]
+
+      puts "#{yellow "#{num}:"} #{code}"
+    }
+
+    puts 
+  end
+
+when 'info'
+  t = [
+    [ :db_name, Dex.db_name ],
+    [ :table_name, Dex.table_name ],
+    [ 'Total:', Dex.count ],
+    [ 'Unresolved:', Dex.filter(:status=>0).count ],
+    [ 'Resolved:' , Dex.filter(:status=>1).count ]
+  ]
+  puts Terminal::Table.new(:rows=>t)
+    
+else
+  raise_arg "Unknown action: #{OPTS[:action]}"
+  
+end
+
+
+
+

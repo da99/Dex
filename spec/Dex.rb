@@ -48,7 +48,7 @@ describe "Dex :recent" do
   it "returns first result if n = 1" do
     e = except "One"
     Dex.insert e
-    Dex.recent( 1 )[:message].should == "One"
+    Dex.recent( 1 )[:message].should == e.message
   end
 
   it "returns a dataset if n > 1" do
@@ -146,16 +146,20 @@ describe "Dex :keep_only" do
   behaves_like 'Test DB'
 
   it "deletes oldest records leaving most recent 250" do
-    300.times { |i| Dex.insert except(i.to_s) }
-    Dex.keep_only
-    Dex.count.should == 250
-    Dex.recent(1)[:message].should == '299'
+    rollback {
+      300.times { |i| Dex.insert except(i.to_s) }
+      Dex.keep_only
+      Dex.count.should == 250
+      Dex.recent(1)[:message].should == '299'
+    }
   end
 
   it "accepts a limit argument" do
-    300.times { |i| Dex.insert except(i.to_s) }
-    Dex.keep_only 12
-    Dex.table.count.should == 12
+    rollback {
+      300.times { |i| Dex.insert except(i.to_s) }
+      Dex.keep_only 12
+      Dex.table.count.should == 12
+    }
   end
 
 end # === Dex :keep_only

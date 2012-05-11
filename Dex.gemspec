@@ -29,5 +29,9 @@ Gem::Specification.new do |s|
   # Specify any dependencies here; for example:
   s.add_runtime_dependency 'sqlite3'
   s.add_runtime_dependency 'sequel'
+  s.add_runtime_dependency 'terminal-table'
+  s.add_runtime_dependency 'chronic_duration'
+  s.add_runtime_dependency 'trollop'
+  s.add_runtime_dependency 'term-ansicolor'
 
 end
