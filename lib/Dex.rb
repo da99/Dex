@@ -90,9 +90,10 @@ class Dex
       bt      = :backtrace
       ex      = :exception
       stat    = :status
+      created = :created_at
       
-      final = Hash[ msg => 'Unknown', ex => 'Unknown', stat => 0, :created_at=>Time.now.utc ]
-      if e.respond_to?(:exception)
+      final = Hash[ msg => 'Unknown', ex => 'Unknown', stat => 0, created =>Time.now.utc ]
+      if e.respond_to?(ex)
         final[ msg ] = e.message
         final[ bt  ] = e.backtrace
         final[ ex  ] = e.exception.class.name
