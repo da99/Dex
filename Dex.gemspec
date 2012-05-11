@@ -33,5 +33,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'chronic_duration'
   s.add_runtime_dependency 'trollop'
   s.add_runtime_dependency 'term-ansicolor'
-
+  s.add_runtime_dependency 'Backtrace_Array'
 end

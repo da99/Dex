@@ -7,6 +7,8 @@ require 'terminal-table'
 require 'chronic_duration'
 require 'trollop'
 require 'term/ansicolor'
+require 'Backtrace_Array'
+
 include Term::ANSIColor
 
 module Kernal
@@ -107,32 +109,31 @@ when 'show'
   raise_args "Record not found with offset: #{OPTS[:offset]}" unless r
   
   b = r.delete :backtrace
-  
+  b = b ? Backtrace_Array(b) : []
+
   puts Terminal::Table.new(:rows=>r.to_a)
 
   if OPTS[:backtrace]
+    
     puts "Backtrace:"
     current_line = nil
-    rows = []
-    b.each_line { |l|
-      pieces = l.split(%r!:(\d+):!)
-      line = pieces.shift
-      num = pieces.shift
-      code = pieces.join("")
+    
+    b.each { |l|
       
-      if current_line != line
-        rows << [line]
-        current_line = line
-        puts ''
-        puts bold(line.sub(Dir.pwd, '.').sub(File.expand_path('~'), '~'))
-      end
-      
-      rows << [num, code]
+      line    = l.first
+      content = l[1]
 
-      puts "#{yellow "#{num}:"} #{code}"
+      puts ''
+      puts bold(line.sub(Dir.pwd, '.').sub(File.expand_path('~'), '~'))
+        
+      content.each { |pair|
+        num  = pair.first
+        code = pair.last
+        puts "#{yellow "#{num}:"} #{code}"
+      }
+      
     }
 
-    puts 
   end
 
 when 'info'
