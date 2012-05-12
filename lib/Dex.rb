@@ -114,7 +114,7 @@ class Dex
         end
       end
       
-      final[ bt ] = (final[bt] || []).join("\n")
+      final[ bt ] = [ final[bt] ].compact.join("\n")
       
       final.keys.each { |k|
         v = final[k]

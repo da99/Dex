@@ -155,6 +155,23 @@ describe "Dex :insert" do
     }
   end
 
+  it "accepts a Hash with an overriding :backtrace String" do
+    target = "file:1:txt1\nfile:2:txt2"
+    dex = new_dex "custom hash"
+    rollback(dex) {
+      dex.insert :exception=>"Nginx Error", :message=>"upstream not found", :backtrace=>target, :status=>1
+      last(dex)[:backtrace].should == target
+    }
+  end
+
+  it "accepts a Hash with an overriding :backtrace nil" do
+    dex = new_dex "custom hash"
+    rollback(dex) {
+      dex.insert :exception=>"Nginx Error", :message=>"upstream not found", :backtrace=>nil, :status=>1
+      last(dex)[:backtrace].should == ''
+    }
+  end
+
 end # === Dex :insert
 
 describe "Dex :keep_only" do
